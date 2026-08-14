@@ -1,41 +1,47 @@
-const t = window.TrelloPowerUp;
+const powerUpHost = window.TrelloPowerUp;
 
-if (!t) {
+if (!powerUpHost) {
   console.error('Trello Power-Up SDK wurde nicht geladen.');
 } else {
-  t.initialize({
-    'card-back-section': function (t) {
-      return {
-        title: '🚗 Autohaus Abrechnung',
-        icon: 'https://cdn-icons-png.flaticon.com/512/2693/2693507.png',
-        content: {
-          type: 'iframe',
-          url: window.location.origin + '/autohaus-powerup/index.html'
-        }
-      };
-    },
-    'card-buttons': function (t) {
-      return [{
-        icon: 'https://cdn-icons-png.flaticon.com/512/2693/2693507.png',
-        text: 'Abrechnung öffnen',
-        callback: function (t) {
-          return t.popup({
-            title: 'Autohaus Abrechnung',
-            url: window.location.origin + '/autohaus-powerup/index.html'
-          });
-        }
-      }];
-    },
-    'card-badges': async function (t) {
-      const data = await t.getData('card', ['gesamtbetrag']);
-      if (!data.gesamtbetrag) return [];
-      return [{
-        icon: 'https://cdn-icons-png.flaticon.com/512/2693/2693507.png',
-        text: `${parseFloat(data.gesamtbetrag).toFixed(2)} €`,
-        color: 'blue'
-      }];
-    }
-  });
+  const t = typeof powerUpHost.iframe === 'function' ? powerUpHost.iframe() : powerUpHost;
+
+  if (typeof powerUpHost.initialize === 'function') {
+    powerUpHost.initialize({
+      'card-back-section': function (t) {
+        return {
+          title: '🚗 Autohaus Abrechnung',
+          icon: 'https://cdn-icons-png.flaticon.com/512/2693/2693507.png',
+          content: {
+            type: 'iframe',
+            url: window.location.origin + '/autohaus-powerup/index.html',
+            height: 520
+          }
+        };
+      },
+      'card-buttons': function (t) {
+        return [{
+          icon: 'https://cdn-icons-png.flaticon.com/512/2693/2693507.png',
+          text: 'Abrechnung öffnen',
+          callback: function (t) {
+            return t.popup({
+              title: 'Autohaus Abrechnung',
+              url: window.location.origin + '/autohaus-powerup/index.html',
+              height: 520
+            });
+          }
+        }];
+      },
+      'card-badges': async function (t) {
+        const data = await t.getData('card', ['gesamtbetrag']);
+        if (!data.gesamtbetrag) return [];
+        return [{
+          icon: 'https://cdn-icons-png.flaticon.com/512/2693/2693507.png',
+          text: `${parseFloat(data.gesamtbetrag).toFixed(2)} €`,
+          color: 'blue'
+        }];
+      }
+    });
+  }
 
   document.addEventListener('DOMContentLoaded', function () {
     const standorteCheckboxes = document.querySelectorAll('input[type="checkbox"][id^="standort-"]');
@@ -50,6 +56,12 @@ if (!t) {
     const stundenField = document.getElementById('stunden-field');
 
     if (!paketSelect) return;
+
+    function resizeIframe() {
+      if (t && typeof t.sizeTo === 'function') {
+        t.sizeTo('.container').catch(() => { });
+      }
+    }
 
     function selectedStandorte() {
       return Array.from(standorteCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
@@ -78,26 +90,29 @@ if (!t) {
 
       const count = selectedStandorte().length;
       updateBadge(count ? total / count : 0);
+      resizeIframe();
     }
 
     async function loadData() {
       try {
-        const data = await t.getData('card', ['standorte', 'paket', 'stunden', 'gesamtbetrag', 'betrag_pro_standort', 'abrechnungstyp']);
-        if (Array.isArray(data.standorte)) {
-          standorteCheckboxes.forEach(cb => cb.checked = data.standorte.includes(cb.value));
-        }
-        if (data.abrechnungstyp) {
-          const radio = document.querySelector(`input[name="abrechnungstyp"][value="${data.abrechnungstyp}"]`);
-          if (radio) radio.checked = true;
-        }
-        if (data.paket) paketSelect.value = data.paket;
-        if (data.stunden) stundenInput.value = data.stunden;
-        if (data.gesamtbetrag) gesamtbetragInput.value = data.gesamtbetrag;
+        if (t && typeof t.getData === 'function') {
+          const data = await t.getData('card', ['standorte', 'paket', 'stunden', 'gesamtbetrag', 'betrag_pro_standort', 'abrechnungstyp']);
+          if (Array.isArray(data.standorte)) {
+            standorteCheckboxes.forEach(cb => cb.checked = data.standorte.includes(cb.value));
+          }
+          if (data.abrechnungstyp) {
+            const radio = document.querySelector(`input[name="abrechnungstyp"][value="${data.abrechnungstyp}"]`);
+            if (radio) radio.checked = true;
+          }
+          if (data.paket) paketSelect.value = data.paket;
+          if (data.stunden) stundenInput.value = data.stunden;
+          if (data.gesamtbetrag) gesamtbetragInput.value = data.gesamtbetrag;
 
-        const type = document.querySelector('input[name="abrechnungstyp"]:checked')?.value;
-        paketField.classList.toggle('hidden', type === 'stunden');
-        stundenField.classList.toggle('hidden', type !== 'stunden');
-        calculateAmount();
+          const type = document.querySelector('input[name="abrechnungstyp"]:checked')?.value;
+          paketField.classList.toggle('hidden', type === 'stunden');
+          stundenField.classList.toggle('hidden', type !== 'stunden');
+          calculateAmount();
+        }
       } catch (error) {
         console.error('Fehler beim Laden:', error);
       }
@@ -117,16 +132,18 @@ if (!t) {
 
     async function saveData() {
       try {
-        const amountText = badge.textContent.replace('💰 Betrag pro Standort: ', '').replace(' €', '').replace('.', '').replace(',', '.');
-        await t.setData('card', {
-          standorte: selectedStandorte(),
-          paket: paketSelect.value,
-          stunden: stundenInput.value,
-          gesamtbetrag: gesamtbetragInput.value,
-          betrag_pro_standort: (Number(amountText) || 0).toFixed(2),
-          abrechnungstyp: document.querySelector('input[name="abrechnungstyp"]:checked')?.value || 'paket'
-        });
-        alert('✅ Daten gespeichert!');
+        if (t && typeof t.setData === 'function') {
+          const amountText = badge.textContent.replace('💰 Betrag pro Standort: ', '').replace(' €', '').replace('.', '').replace(',', '.');
+          await t.setData('card', {
+            standorte: selectedStandorte(),
+            paket: paketSelect.value,
+            stunden: stundenInput.value,
+            gesamtbetrag: gesamtbetragInput.value,
+            betrag_pro_standort: (Number(amountText) || 0).toFixed(2),
+            abrechnungstyp: document.querySelector('input[name="abrechnungstyp"]:checked')?.value || 'paket'
+          });
+          alert('✅ Daten gespeichert!');
+        }
       } catch (error) {
         console.error('Fehler beim Speichern:', error);
         alert('❌ Fehler beim Speichern: ' + error.message);
@@ -141,5 +158,11 @@ if (!t) {
     saveBtn.addEventListener('click', saveData);
     moveBtn.addEventListener('click', moveToAbrechnung);
     loadData();
+
+    if (t && typeof t.render === 'function') {
+      t.render(function () {
+        resizeIframe();
+      });
+    }
   });
 }

@@ -113,8 +113,12 @@
   <script src="index.js"></script>
   <script>
     function resizeTrelloIframe() {
-      if (window.TrelloPowerUp && typeof window.TrelloPowerUp.sizeTo === 'function') {
-        window.TrelloPowerUp.sizeTo('body').catch(function (error) {
+      const t = typeof window.TrelloPowerUp !== 'undefined' && typeof window.TrelloPowerUp.iframe === 'function'
+        ? window.TrelloPowerUp.iframe()
+        : null;
+
+      if (t && typeof t.sizeTo === 'function') {
+        t.sizeTo('.container').catch(function (error) {
           console.warn('Iframe-Höhe konnte nicht angepasst werden:', error);
         });
       }
