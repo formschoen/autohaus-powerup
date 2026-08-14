@@ -2,7 +2,19 @@
 const t = window.TrelloPowerUp;
 
 t.initialize({
-  // Card Buttons anzeigen
+  // Card Back Section (Formular direkt in der Karte - immer sichtbar!)
+  'card-back-section': function (t) {
+    return {
+      title: '🚗 Autohaus Abrechnung',
+      icon: 'https://cdn-icons-png.flaticon.com/512/2693/2693507.png',
+      content: {
+        type: 'iframe',
+        url: window.location.origin + '/autohaus-powerup/index.html'
+      }
+    };
+  },
+
+  // Card Buttons anzeigen (optional, als Alternative)
   'card-buttons': function (t) {
     return [{
       icon: 'https://cdn-icons-png.flaticon.com/512/2693/2693507.png',
@@ -36,7 +48,7 @@ t.initialize({
   }
 });
 
-// Formular-Logik
+// Formular-Logik (nur wenn direkt im iframe geladen)
 document.addEventListener('DOMContentLoaded', function () {
   const autohausSelect = document.getElementById('autohaus');
   const standorteInput = document.getElementById('standorte');
@@ -47,6 +59,9 @@ document.addEventListener('DOMContentLoaded', function () {
   const berechnungBadge = document.getElementById('berechnung-badge');
   const saveBtn = document.getElementById('save-btn');
   const abrechnungBtn = document.getElementById('abrechnung-btn');
+
+  // Nur wenn Formular-Elemente existieren (nicht im Power-Up Kontext)
+  if (!autohausSelect) return;
 
   // Daten laden wenn Power-Up geöffnet wird
   loadData();
