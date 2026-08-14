@@ -300,34 +300,5 @@
   
   <!-- Dein Script -->
   <script src="index.js"></script>
-  
-  <!-- Resize Script für iframe Höhe -->
-  <script>
-    // Automatische iframe Höhe anpassen
-    if (window.TrelloPowerUp) {
-      const t = window.TrelloPowerUp;
-      
-      // Beobachte Änderungen im DOM für automatische Höhe
-      const observer = new MutationObserver(function() {
-        if (t && t.sizeIframe) {
-          t.sizeIframe();
-        }
-      });
-      
-      observer.observe(document.body, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-        characterData: true
-      });
-      
-      // Initiale Größe setzen
-      setTimeout(function() {
-        if (t && t.sizeIframe) {
-          t.sizeIframe();
-        }
-      }, 100);
-    }
-  </script>
 </body>
 </html>
