@@ -52,9 +52,7 @@ if (!t) {
     if (!paketSelect) return;
 
     function selectedStandorte() {
-      return Array.from(standorteCheckboxes)
-        .filter(cb => cb.checked)
-        .map(cb => cb.value);
+      return Array.from(standorteCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
     }
 
     function updateBadge(value) {
@@ -84,15 +82,9 @@ if (!t) {
 
     async function loadData() {
       try {
-        const data = await t.getData('card', [
-          'standorte', 'paket', 'stunden', 'gesamtbetrag',
-          'betrag_pro_standort', 'abrechnungstyp'
-        ]);
-
+        const data = await t.getData('card', ['standorte', 'paket', 'stunden', 'gesamtbetrag', 'betrag_pro_standort', 'abrechnungstyp']);
         if (Array.isArray(data.standorte)) {
-          standorteCheckboxes.forEach(cb => {
-            cb.checked = data.standorte.includes(cb.value);
-          });
+          standorteCheckboxes.forEach(cb => cb.checked = data.standorte.includes(cb.value));
         }
         if (data.abrechnungstyp) {
           const radio = document.querySelector(`input[name="abrechnungstyp"][value="${data.abrechnungstyp}"]`);
@@ -105,7 +97,6 @@ if (!t) {
         const type = document.querySelector('input[name="abrechnungstyp"]:checked')?.value;
         paketField.classList.toggle('hidden', type === 'stunden');
         stundenField.classList.toggle('hidden', type !== 'stunden');
-        updateBadge(data.betrag_pro_standort || 0);
         calculateAmount();
       } catch (error) {
         console.error('Fehler beim Laden:', error);
@@ -126,12 +117,7 @@ if (!t) {
 
     async function saveData() {
       try {
-        const amountText = badge.textContent
-          .replace('💰 Betrag pro Standort: ', '')
-          .replace(' €', '')
-          .replace('.', '')
-          .replace(',', '.');
-
+        const amountText = badge.textContent.replace('💰 Betrag pro Standort: ', '').replace(' €', '').replace('.', '').replace(',', '.');
         await t.setData('card', {
           standorte: selectedStandorte(),
           paket: paketSelect.value,

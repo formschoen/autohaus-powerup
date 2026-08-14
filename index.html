@@ -15,12 +15,7 @@
       color: #fff;
       padding: 16px;
     }
-    .container {
-      width: 100%;
-      max-width: 680px;
-      margin: 0 auto;
-      padding: 0;
-    }
+    .container { width: 100%; max-width: 680px; margin: 0 auto; padding: 0; }
     h1 { margin: 0 0 6px; font-size: 22px; color: #fff; }
     .subtitle { margin: 0 0 22px; color: rgba(255,255,255,.72); font-size: 13px; }
     .form-group { margin: 0 0 18px; }
@@ -114,6 +109,19 @@
       </div>
     </form>
   </div>
+
   <script src="index.js"></script>
+  <script>
+    function resizeTrelloIframe() {
+      if (window.TrelloPowerUp && typeof window.TrelloPowerUp.sizeTo === 'function') {
+        window.TrelloPowerUp.sizeTo('body').catch(function (error) {
+          console.warn('Iframe-Höhe konnte nicht angepasst werden:', error);
+        });
+      }
+    }
+
+    window.addEventListener('load', resizeTrelloIframe);
+    window.addEventListener('resize', resizeTrelloIframe);
+  </script>
 </body>
 </html>
