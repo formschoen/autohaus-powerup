@@ -50,18 +50,19 @@ t.initialize({
 
 // Formular-Logik (nur wenn direkt im iframe geladen)
 document.addEventListener('DOMContentLoaded', function () {
-  const autohausSelect = document.getElementById('autohaus');
-  const standorteInput = document.getElementById('standorte');
+  const standorteSelect = document.getElementById('standorte');
+  const abrechnungstypRadios = document.querySelectorAll('input[name="abrechnungstyp"]');
   const paketSelect = document.getElementById('paket');
   const stundenInput = document.getElementById('stunden');
   const gesamtbetragInput = document.getElementById('gesamtbetrag');
-  const betragProStandortInput = document.getElementById('betrag_pro_standort');
   const berechnungBadge = document.getElementById('berechnung-badge');
   const saveBtn = document.getElementById('save-btn');
   const abrechnungBtn = document.getElementById('abrechnung-btn');
+  const paketField = document.getElementById('paket-field');
+  const stundenField = document.getElementById('stunden-field');
 
   // Nur wenn Formular-Elemente existieren (nicht im Power-Up Kontext)
-  if (!autohausSelect) return;
+  if (!standorteSelect) return;
 
   // Daten laden wenn Power-Up geöffnet wird
   loadData();
@@ -69,8 +70,22 @@ document.addEventListener('DOMContentLoaded', function () {
   // Berechnung bei Änderungen
   paketSelect.addEventListener('change', calculateAmount);
   stundenInput.addEventListener('input', calculateAmount);
-  standorteInput.addEventListener('input', calculateAmount);
   gesamtbetragInput.addEventListener('input', calculateAmount);
+  standorteSelect.addEventListener('change', calculateAmount);
+
+  // Abrechnungstyp wechseln (Paket/Stunden)
+  abrechnungstypRadios.forEach(radio => {
+    radio.addEventListener('change', function() {
+      if (this.value === 'paket') {
+        paketField.classList.remove('hidden');
+        stundenField.classList.add('hidden');
+      } else {
+        paketField.classList.add('hidden');
+        stundenField.classList.remove('hidden');
+      }
+      calculateAmount();
+    });
+  });
 
   // Speichern Button
   saveBtn.addEventListener('click', saveData);
@@ -82,17 +97,36 @@ document.addEventListener('DOMContentLoaded', function () {
   async function loadData() {
     try {
       const data = await t.getData('card', [
-        'autohaus', 'standorte', 'paket', 'stunden',
-        'gesamtbetrag', 'betrag_pro_standort'
+        'standorte', 'paket', 'stunden', 
+        'gesamtbetrag', 'betrag_pro_standort', 'abrechnungstyp'
       ]);
 
-      if (data.autohaus) autohausSelect.value = data.autohaus;
-      if (data.standorte) standorteInput.value = data.standorte;
+      // Standorte (Array)
+      if (data.standorte && Array.isArray(data.standorte)) {
+        Array.from(standorteSelect.options).forEach(option => {
+          option.selected = data.standorte.includes(option.value);
+        });
+      }
+
+      // Abrechnungstyp
+      if (data.abrechnungstyp) {
+        const radio = document.querySelector(`input[name="abrechnungstyp"][value="${data.abrechnungstyp}"]`);
+        if (radio) {
+          radio.checked = true;
+          if (data.abrechnungstyp === 'stunden') {
+            paketField.classList.add('hidden');
+            stundenField.classList.remove('hidden');
+          } else {
+            paketField.classList.remove('hidden');
+            stundenField.classList.add('hidden');
+          }
+        }
+      }
+
       if (data.paket) paketSelect.value = data.paket;
       if (data.stunden) stundenInput.value = data.stunden;
       if (data.gesamtbetrag) gesamtbetragInput.value = data.gesamtbetrag;
       if (data.betrag_pro_standort) {
-        betragProStandortInput.value = data.betrag_pro_standort;
         updateBadge(data.betrag_pro_standort);
       }
 
@@ -105,33 +139,38 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Funktion: Betrag berechnen
   function calculateAmount() {
-    const paketValue = paketSelect.value;
-    const stunden = parseFloat(stundenInput.value) || 0;
-    const standorte = parseInt(standorteInput.value) || 1;
+    const standorte = Array.from(standorteSelect.selectedOptions).map(opt => opt.value);
+    const anzahlStandorte = standorte.length;
+    const abrechnungstyp = document.querySelector('input[name="abrechnungstyp"]:checked').value;
     let gesamtbetrag = parseFloat(gesamtbetragInput.value) || 0;
 
-    // Wenn Paket ausgewählt ist, Stunden und Betrag übernehmen
-    if (paketValue) {
-      const parts = paketValue.split('|');
-      const paketStunden = parseFloat(parts[1]);
-      const paketBetrag = parseFloat(parts[2]);
+    if (abrechnungstyp === 'paket') {
+      const paketValue = paketSelect.value;
+      
+      // Wenn Paket ausgewählt ist, Betrag übernehmen
+      if (paketValue) {
+        const parts = paketValue.split('|');
+        const paketBetrag = parseFloat(parts[2]);
 
-      // Nur aktualisieren wenn Gesamtbetrag noch 0 ist (manuelle Änderung respektieren)
-      if (gesamtbetrag === 0) {
-        gesamtbetrag = paketBetrag;
-        gesamtbetragInput.value = paketBetrag;
+        // Nur aktualisieren wenn Gesamtbetrag noch 0 ist (manuelle Änderung respektieren)
+        if (gesamtbetrag === 0) {
+          gesamtbetrag = paketBetrag;
+          gesamtbetragInput.value = paketBetrag;
+        }
       }
     } else {
-      // Ohne Paket: Stunden × 85€
-      if (gesamtbetrag === 0 && stunden > 0) {
+      // Stunden-Abrechnung
+      const stunden = parseFloat(stundenInput.value) || 0;
+      
+      // Stunden × 85€
+      if (stunden > 0 && gesamtbetrag === 0) {
         gesamtbetrag = stunden * 85;
         gesamtbetragInput.value = gesamtbetrag.toFixed(2);
       }
     }
 
     // Betrag pro Standort berechnen
-    const betragProStandort = standorte > 0 ? gesamtbetrag / standorte : 0;
-    betragProStandortInput.value = betragProStandort.toFixed(2);
+    const betragProStandort = anzahlStandorte > 0 ? gesamtbetrag / anzahlStandorte : 0;
     updateBadge(betragProStandort.toFixed(2));
   }
 
@@ -143,13 +182,16 @@ document.addEventListener('DOMContentLoaded', function () {
   // Funktion: Daten in Trello speichern
   async function saveData() {
     try {
+      const standorte = Array.from(standorteSelect.selectedOptions).map(opt => opt.value);
+      const abrechnungstyp = document.querySelector('input[name="abrechnungstyp"]:checked').value;
+
       await t.setData('card', {
-        autohaus: autohausSelect.value,
-        standorte: standorteInput.value,
+        standorte: standorte,
         paket: paketSelect.value,
         stunden: stundenInput.value,
         gesamtbetrag: gesamtbetragInput.value,
-        betrag_pro_standort: betragProStandortInput.value
+        betrag_pro_standort: parseFloat(berechnungBadge.textContent.replace('💰 Betrag pro Standort: ', '').replace(' €', '').replace('.', '').replace(',', '.')).toFixed(2),
+        abrechnungstyp: abrechnungstyp
       });
 
       alert('✅ Daten gespeichert!');
