@@ -4,14 +4,18 @@ const t = window.TrelloPowerUp;
 t.initialize({
   // Card Back Section (Formular direkt in der Karte - immer sichtbar!)
   'card-back-section': function (t) {
-    return {
-      title: '🚗 Autohaus Abrechnung',
-      icon: 'https://cdn-icons-png.flaticon.com/512/2693/2693507.png',
-      content: {
-        type: 'iframe',
-        url: window.location.origin + '/autohaus-powerup/index.html'
-      }
-    };
+    return t
+      .sizeTo('content')
+      .then(function () {
+        return {
+          title: '🚗 Autohaus Abrechnung',
+          icon: 'https://cdn-icons-png.flaticon.com/512/2693/2693507.png',
+          content: {
+            type: 'iframe',
+            url: t.signUrl('./index.html')
+          }
+        };
+      });
   },
 
   // Card Buttons anzeigen (optional, als Alternative)
@@ -77,7 +81,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Abrechnungstyp wechseln (Paket/Stunden)
   abrechnungstypRadios.forEach(radio => {
-    radio.addEventListener('change', function() {
+    radio.addEventListener('change', function () {
       if (this.value === 'paket') {
         paketField.classList.remove('hidden');
         stundenField.classList.add('hidden');
@@ -99,7 +103,7 @@ document.addEventListener('DOMContentLoaded', function () {
   async function loadData() {
     try {
       const data = await t.getData('card', [
-        'standorte', 'paket', 'stunden', 
+        'standorte', 'paket', 'stunden',
         'gesamtbetrag', 'betrag_pro_standort', 'abrechnungstyp'
       ]);
 
@@ -148,7 +152,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (abrechnungstyp === 'paket') {
       const paketValue = paketSelect.value;
-      
+
       // Wenn Paket ausgewählt ist, Betrag übernehmen
       if (paketValue) {
         const parts = paketValue.split('|');
@@ -163,7 +167,7 @@ document.addEventListener('DOMContentLoaded', function () {
     } else {
       // Stunden-Abrechnung
       const stunden = parseFloat(stundenInput.value) || 0;
-      
+
       // Stunden × 85€ (immer berechnen, nicht nur bei 0)
       if (stunden > 0) {
         const berechneterBetrag = stunden * 85;

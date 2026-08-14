@@ -1,262 +1,333 @@
 <!DOCTYPE html>
 <html lang="de">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Autohaus Abrechnung Power-Up</title>
-    <script src="https://p.trellocdn.com/power-up.min.js"></script>
-    <style>
-        html,
-        body {
-            height: auto;
-            min-height: 100vh;
-            margin: 0;
-            padding: 15px;
-            overflow: visible;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            padding: 15px;
-            max-width: 350px;
-            margin: 0 auto;
-            background: #f4f5f7;
-            background-color: transparent;
-        }
-
-        #app {
-            min-height: 100%;
-        }
-
-        h2 {
-            margin: 0 0 15px 0;
-            font-size: 16px;
-            color: #172b4d;
-            color: white;
-        }
-
-        .field {
-            margin-bottom: 12px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 4px;
-            font-weight: 600;
-            color: #172b4d;
-            font-size: 13px;
-            color: white;
-        }
-
-        select,
-        input[type="number"] {
-            width: 100%;
-            padding: 6px 8px;
-            border: 2px solid #dfe1e6;
-            border-radius: 4px;
-            font-size: 13px;
-            box-sizing: border-box;
-        }
-
-        select:focus,
-        input:focus {
-            border-color: #0079bf;
-            outline: none;
-        }
-
-        select[multiple] {
-            height: 80px;
-        }
-
-        .radio-group {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 12px;
-        }
-
-        .radio-group label {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-weight: 500;
-            cursor: pointer;
-        }
-
-        .radio-group input[type="radio"] {
-            margin: 0;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        .badge {
-            background: #0079bf;
-            color: white;
-            padding: 6px 10px;
-            border-radius: 4px;
-            margin-top: 10px;
-            font-weight: 600;
-            font-size: 13px;
-        }
-
-        button {
-            background: #0079bf;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
-            width: 100%;
-            margin-top: 12px;
-        }
-
-        button:hover {
-            background: #005a8e;
-        }
-
-        #abrechnung-btn {
-            background: #5aac44;
-        }
-
-        #abrechnung-btn:hover {
-            background: #519839;
-        }
-
-        /* Checkbox-Standorte statt Multi-Select */
-        .standorte-list {
-            border: 2px solid #dfe1e6;
-            border-radius: 4px;
-            padding: 8px;
-            background: white;
-        }
-
-        .standort-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 6px;
-        }
-
-        .standort-item:last-child {
-            margin-bottom: 0;
-        }
-
-        .standort-item input[type="checkbox"] {
-            margin: 0;
-            width: 16px;
-            height: 16px;
-            cursor: pointer;
-        }
-
-        .standort-item label {
-            margin: 0;
-            font-weight: 500;
-            cursor: pointer;
-            flex: 1;
-        }
-
-        /* Number Input ohne Spinner */
-        input[type="number"]::-webkit-inner-spin-button,
-        input[type="number"]::-webkit-outer-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-
-        input[type="number"] {
-            -moz-appearance: textfield;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Autohaus Abrechnung Power-Up</title>
+  
+  <!-- Trello SDK laden -->
+  <script src="https://p.trellocdn.com/power-up.min.js"></script>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px;
+      min-height: 100vh;
+    }
+    
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      padding: 30px;
+    }
+    
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 24px;
+    }
+    
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+    
+    .form-group {
+      margin-bottom: 25px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #333;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    
+    .radio-group {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 15px;
+    }
+    
+    .radio-group label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-weight: normal;
+    }
+    
+    input[type="radio"],
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+    
+    select,
+    input[type="number"] {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.3s;
+    }
+    
+    select:focus,
+    input[type="number"]:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    .checkbox-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    
+    .checkbox-group label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px;
+      background: #f5f5f5;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    
+    .checkbox-group label:hover {
+      background: #e8e8e8;
+    }
+    
+    .checkbox-group input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+    }
+    
+    .button-group {
+      display: flex;
+      gap: 15px;
+      margin-top: 30px;
+    }
+    
+    button {
+      flex: 1;
+      padding: 14px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    #save-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    #save-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    #abrechnung-btn {
+      background: #f0f0f0;
+      color: #333;
+    }
+    
+    #abrechnung-btn:hover {
+      background: #e0e0e0;
+    }
+    
+    .hidden {
+      display: none;
+    }
+    
+    #berechnung-badge {
+      margin-top: 20px;
+      padding: 15px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 8px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 16px;
+    }
+  </style>
 </head>
-
 <body>
-    <div id="app">
-        <h2>🚗 Autohaus Abrechnung</h2>
-
-        <div class="field">
-            <label>Standorte auswählen</label>
-            <div class="standorte-list">
-                <div class="standort-item">
-                    <input type="checkbox" id="standort-1" value="Skoda Autohaus Thormann Stendal">
-                    <label for="standort-1">Skoda Autohaus Thormann Stendal</label>
-                </div>
-                <div class="standort-item">
-                    <input type="checkbox" id="standort-2" value="Skoda Autohaus Thormann Gardelegen">
-                    <label for="standort-2">Skoda Autohaus Thormann Gardelegen</label>
-                </div>
-                <div class="standort-item">
-                    <input type="checkbox" id="standort-3" value="Skoda Autohaus Mothor Brandenburg">
-                    <label for="standort-3">Skoda Autohaus Mothor Brandenburg</label>
-                </div>
-                <div class="standort-item">
-                    <input type="checkbox" id="standort-4" value="Volkswagen Autohaus Brandenburg">
-                    <label for="standort-4">Volkswagen Autohaus Brandenburg</label>
-                </div>
-                <div class="standort-item">
-                    <input type="checkbox" id="standort-5" value="Ford/Dehleffs Autocenter Brandenburg">
-                    <label for="standort-5">Ford/Dehleffs Autocenter Brandenburg</label>
-                </div>
-                <div class="standort-item">
-                    <input type="checkbox" id="standort-6" value="Ford/Mitsubishi Autocenter Stendal">
-                    <label for="standort-6">Ford/Mitsubishi Autocenter Stendal</label>
-                </div>
-                <div class="standort-item">
-                    <input type="checkbox" id="standort-7" value="Ford/Mitsubishi Autocenter Gardelegen">
-                    <label for="standort-7">Ford/Mitsubishi Autocenter Gardelegen</label>
-                </div>
-                <div class="standort-item">
-                    <input type="checkbox" id="standort-8" value="Mitsubishi Brandenburg">
-                    <label for="standort-8">Mitsubishi Brandenburg</label>
-                </div>
-            </div>
-        </div>
-
+  <div class="container">
+    <h1>🚗 Autohaus Abrechnung</h1>
+    <p class="subtitle">Wochenabrechnung für Fahrzeugreinigung</p>
+    
+    <form id="abrechnung-form">
+      <!-- Abrechnungstyp -->
+      <div class="form-group">
+        <label>Abrechnungstyp:</label>
         <div class="radio-group">
-            <label>
-                <input type="radio" name="abrechnungstyp" value="paket" checked>
-                Paket
-            </label>
-            <label>
-                <input type="radio" name="abrechnungstyp" value="stunden">
-                Stunden
-            </label>
+          <label>
+            <input type="radio" name="abrechnungstyp" value="paket" checked>
+            Paket-Abrechnung
+          </label>
+          <label>
+            <input type="radio" name="abrechnungstyp" value="stunden">
+            Stunden-Abrechnung
+          </label>
         </div>
-
-        <div class="field" id="paket-field">
-            <label for="paket">Paket auswählen</label>
-            <select id="paket">
-                <option value="">Bitte wählen...</option>
-                <option value="SocialMediaMarketing-Paket Recruiting mittel|5|425">SocialMediaMarketing-Paket Recruiting
-                    mittel (5 Std - 425€)</option>
-                <option value="SocialMediaMarketing-Paket Recruiting klein|3|255">SocialMediaMarketing-Paket Recruiting
-                    klein (3 Std - 255€)</option>
-                <option value="SocialMediaMarketing-Paket mittel|6|510">SocialMediaMarketing-Paket mittel (6 Std - 510€)
-                </option>
-                <option value="SocialMediaMarketing-Paket klein|5|425">SocialMediaMarketing-Paket klein (5 Std - 425€)
-                </option>
-                <option value="Marketing-Paket Kampagne|14|1190">Marketing-Paket Kampagne (14 Std - 1190€)</option>
-            </select>
+      </div>
+      
+      <!-- Paket-Auswahl -->
+      <div class="form-group" id="paket-field">
+        <label for="paket">Paket auswählen:</label>
+        <select id="paket" required>
+          <option value="">-- Bitte wählen --</option>
+          <option value="innen_aussen|Innen & Außen|150">Innen & Außen - 150€</option>
+          <option value="nur_innen|Nur Innen - Klein|80">Nur Innen - Klein - 80€</option>
+          <option value="nur_innen_gross|Nur Innen - Groß|120">Nur Innen - Groß - 120€</option>
+          <option value="aufbereitung|Komplettaufbereitung|300">Komplettaufbereitung - 300€</option>
+          <option value="sonder|Sonderreinigung|200">Sonderreinigung - 200€</option>
+        </select>
+      </div>
+      
+      <!-- Stunden-Eingabe -->
+      <div class="form-group hidden" id="stunden-field">
+        <label for="stunden">Stunden eingeben:</label>
+        <input type="number" id="stunden" min="0" step="0.5" placeholder="z.B. 3.5">
+        <small style="color: #666; display: block; margin-top: 5px;">Preis: 85€ pro Stunde</small>
+      </div>
+      
+      <!-- Standorte -->
+      <div class="form-group">
+        <label>Standorte:</label>
+        <div class="checkbox-group">
+          <label>
+            <input type="checkbox" id="standort-1" value="Berlin" checked>
+            Berlin
+          </label>
+          <label>
+            <input type="checkbox" id="standort-2" value="Munich">
+            Munich
+          </label>
+          <label>
+            <input type="checkbox" id="standort-3" value="Hamburg">
+            Hamburg
+          </label>
+          <label>
+            <input type="checkbox" id="standort-4" value="Frankfurt">
+            Frankfurt
+          </label>
+          <label>
+            <input type="checkbox" id="standort-5" value="Cologne">
+            Cologne
+          </label>
+          <label>
+            <input type="checkbox" id="standort-6" value="Stuttgart">
+            Stuttgart
+          </label>
+          <label>
+            <input type="checkbox" id="standort-7" value="Dusseldorf">
+            Dusseldorf
+          </label>
+          <label>
+            <input type="checkbox" id="standort-8" value="Dortmund">
+            Dortmund
+          </label>
+          <label>
+            <input type="checkbox" id="standort-9" value="Essen">
+            Essen
+          </label>
+          <label>
+            <input type="checkbox" id="standort-10" value="Leipzig">
+            Leipzig
+          </label>
+          <label>
+            <input type="checkbox" id="standort-11" value="Bremen">
+            Bremen
+          </label>
+          <label>
+            <input type="checkbox" id="standort-12" value="Dresden">
+            Dresden
+          </label>
+          <label>
+            <input type="checkbox" id="standort-13" value="Hanover">
+            Hanover
+          </label>
+          <label>
+            <input type="checkbox" id="standort-14" value="Nuremberg">
+            Nuremberg
+          </label>
+          <label>
+            <input type="checkbox" id="standort-15" value="Duisburg">
+            Duisburg
+          </label>
         </div>
-
-        <div class="field hidden" id="stunden-field">
-            <label for="stunden">Stunden</label>
-            <input type="number" id="stunden" min="0" step="1" value="0" placeholder="z.B. 5">
-        </div>
-
-        <div class="field">
-            <label for="gesamtbetrag">Gesamtbetrag (€)</label>
-            <input type="number" id="gesamtbetrag" min="0" step="0.01" value="0" placeholder="0.00">
-        </div>
-
-        <div class="badge" id="berechnung-badge">
-            💰 Betrag pro Standort: 0,00 €
-        </div>
-
-        <button id="save-btn">Speichern</button>
-        <button id="abrechnung-btn">✓ Zur Abrechnung</button>
-    </div>
-
-    <script src="index.js"></script>
+      </div>
+      
+      <!-- Gesamtbetrag -->
+      <div class="form-group">
+        <label for="gesamtbetrag">Gesamtbetrag (€):</label>
+        <input type="number" id="gesamtbetrag" min="0" step="0.01" placeholder="0.00" required>
+      </div>
+      
+      <!-- Berechnungs-Badge -->
+      <div id="berechnung-badge">
+        💰 Betrag pro Standort: 0.00 €
+      </div>
+      
+      <!-- Buttons -->
+      <div class="button-group">
+        <button type="button" id="save-btn">💾 Speichern</button>
+        <button type="button" id="abrechnung-btn">📋 Zur Abrechnung</button>
+      </div>
+    </form>
+  </div>
+  
+  <!-- Dein Script -->
+  <script src="index.js"></script>
+  
+  <!-- Resize Script für iframe Höhe -->
+  <script>
+    // Automatische iframe Höhe anpassen
+    if (window.TrelloPowerUp) {
+      const t = window.TrelloPowerUp;
+      
+      // Beobachte Änderungen im DOM für automatische Höhe
+      const observer = new MutationObserver(function() {
+        if (t && t.sizeIframe) {
+          t.sizeIframe();
+        }
+      });
+      
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        characterData: true
+      });
+      
+      // Initiale Größe setzen
+      setTimeout(function() {
+        if (t && t.sizeIframe) {
+          t.sizeIframe();
+        }
+      }, 100);
+    }
+  </script>
 </body>
-
 </html>
