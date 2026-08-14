@@ -1,220 +1,262 @@
 <!DOCTYPE html>
 <html lang="de">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Autohaus Abrechnung Power-Up</title>
-  <script src="https://p.trellocdn.com/power-up.min.js"></script>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-      padding: 15px;
-      max-width: 350px;
-      margin: 0 auto;
-      background: #f4f5f7;
-    }
-    h2 {
-      margin: 0 0 15px 0;
-      font-size: 16px;
-      color: #172b4d;
-    }
-    .field {
-      margin-bottom: 12px;
-    }
-    label {
-      display: block;
-      margin-bottom: 4px;
-      font-weight: 600;
-      color: #172b4d;
-      font-size: 13px;
-    }
-    select, input[type="number"] {
-      width: 100%;
-      padding: 6px 8px;
-      border: 2px solid #dfe1e6;
-      border-radius: 4px;
-      font-size: 13px;
-      box-sizing: border-box;
-    }
-    select:focus, input:focus {
-      border-color: #0079bf;
-      outline: none;
-    }
-    select[multiple] {
-      height: 80px;
-    }
-    .radio-group {
-      display: flex;
-      gap: 15px;
-      margin-bottom: 12px;
-    }
-    .radio-group label {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      font-weight: 500;
-      cursor: pointer;
-    }
-    .radio-group input[type="radio"] {
-      margin: 0;
-    }
-    .hidden {
-      display: none;
-    }
-    .badge {
-      background: #0079bf;
-      color: white;
-      padding: 6px 10px;
-      border-radius: 4px;
-      margin-top: 10px;
-      font-weight: 600;
-      font-size: 13px;
-    }
-    button {
-      background: #0079bf;
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 600;
-      width: 100%;
-      margin-top: 12px;
-    }
-    button:hover {
-      background: #005a8e;
-    }
-    #abrechnung-btn {
-      background: #5aac44;
-    }
-    #abrechnung-btn:hover {
-      background: #519839;
-    }
-    /* Checkbox-Standorte statt Multi-Select */
-    .standorte-list {
-      max-height: 150px;
-      overflow-y: auto;
-      border: 2px solid #dfe1e6;
-      border-radius: 4px;
-      padding: 8px;
-      background: white;
-    }
-    .standort-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 6px;
-    }
-    .standort-item:last-child {
-      margin-bottom: 0;
-    }
-    .standort-item input[type="checkbox"] {
-      margin: 0;
-      width: 16px;
-      height: 16px;
-      cursor: pointer;
-    }
-    .standort-item label {
-      margin: 0;
-      font-weight: 500;
-      cursor: pointer;
-      flex: 1;
-    }
-    /* Number Input ohne Spinner */
-    input[type="number"]::-webkit-inner-spin-button,
-    input[type="number"]::-webkit-outer-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
-    }
-    input[type="number"] {
-      -moz-appearance: textfield;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autohaus Abrechnung Power-Up</title>
+    <script src="https://p.trellocdn.com/power-up.min.js"></script>
+    <style>
+        html,
+        body {
+            height: auto;
+            min-height: 100vh;
+            margin: 0;
+            padding: 15px;
+            overflow: visible;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            padding: 15px;
+            max-width: 350px;
+            margin: 0 auto;
+            background: #f4f5f7;
+            background-color: transparent;
+        }
+
+        #app {
+            min-height: 100%;
+        }
+
+        h2 {
+            margin: 0 0 15px 0;
+            font-size: 16px;
+            color: #172b4d;
+            color: white;
+        }
+
+        .field {
+            margin-bottom: 12px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 600;
+            color: #172b4d;
+            font-size: 13px;
+            color: white;
+        }
+
+        select,
+        input[type="number"] {
+            width: 100%;
+            padding: 6px 8px;
+            border: 2px solid #dfe1e6;
+            border-radius: 4px;
+            font-size: 13px;
+            box-sizing: border-box;
+        }
+
+        select:focus,
+        input:focus {
+            border-color: #0079bf;
+            outline: none;
+        }
+
+        select[multiple] {
+            height: 80px;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 12px;
+        }
+
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .radio-group input[type="radio"] {
+            margin: 0;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .badge {
+            background: #0079bf;
+            color: white;
+            padding: 6px 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        button {
+            background: #0079bf;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            width: 100%;
+            margin-top: 12px;
+        }
+
+        button:hover {
+            background: #005a8e;
+        }
+
+        #abrechnung-btn {
+            background: #5aac44;
+        }
+
+        #abrechnung-btn:hover {
+            background: #519839;
+        }
+
+        /* Checkbox-Standorte statt Multi-Select */
+        .standorte-list {
+            border: 2px solid #dfe1e6;
+            border-radius: 4px;
+            padding: 8px;
+            background: white;
+        }
+
+        .standort-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .standort-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .standort-item input[type="checkbox"] {
+            margin: 0;
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .standort-item label {
+            margin: 0;
+            font-weight: 500;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        /* Number Input ohne Spinner */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+    </style>
 </head>
+
 <body>
-  <div id="app">
-    <h2>🚗 Autohaus Abrechnung</h2>
-    
-    <div class="field">
-      <label>Standorte auswählen</label>
-      <div class="standorte-list">
-        <div class="standort-item">
-          <input type="checkbox" id="standort-1" value="Skoda Autohaus Thormann Stendal">
-          <label for="standort-1">Skoda Autohaus Thormann Stendal</label>
+    <div id="app">
+        <h2>🚗 Autohaus Abrechnung</h2>
+
+        <div class="field">
+            <label>Standorte auswählen</label>
+            <div class="standorte-list">
+                <div class="standort-item">
+                    <input type="checkbox" id="standort-1" value="Skoda Autohaus Thormann Stendal">
+                    <label for="standort-1">Skoda Autohaus Thormann Stendal</label>
+                </div>
+                <div class="standort-item">
+                    <input type="checkbox" id="standort-2" value="Skoda Autohaus Thormann Gardelegen">
+                    <label for="standort-2">Skoda Autohaus Thormann Gardelegen</label>
+                </div>
+                <div class="standort-item">
+                    <input type="checkbox" id="standort-3" value="Skoda Autohaus Mothor Brandenburg">
+                    <label for="standort-3">Skoda Autohaus Mothor Brandenburg</label>
+                </div>
+                <div class="standort-item">
+                    <input type="checkbox" id="standort-4" value="Volkswagen Autohaus Brandenburg">
+                    <label for="standort-4">Volkswagen Autohaus Brandenburg</label>
+                </div>
+                <div class="standort-item">
+                    <input type="checkbox" id="standort-5" value="Ford/Dehleffs Autocenter Brandenburg">
+                    <label for="standort-5">Ford/Dehleffs Autocenter Brandenburg</label>
+                </div>
+                <div class="standort-item">
+                    <input type="checkbox" id="standort-6" value="Ford/Mitsubishi Autocenter Stendal">
+                    <label for="standort-6">Ford/Mitsubishi Autocenter Stendal</label>
+                </div>
+                <div class="standort-item">
+                    <input type="checkbox" id="standort-7" value="Ford/Mitsubishi Autocenter Gardelegen">
+                    <label for="standort-7">Ford/Mitsubishi Autocenter Gardelegen</label>
+                </div>
+                <div class="standort-item">
+                    <input type="checkbox" id="standort-8" value="Mitsubishi Brandenburg">
+                    <label for="standort-8">Mitsubishi Brandenburg</label>
+                </div>
+            </div>
         </div>
-        <div class="standort-item">
-          <input type="checkbox" id="standort-2" value="Skoda Autohaus Thormann Gardelegen">
-          <label for="standort-2">Skoda Autohaus Thormann Gardelegen</label>
+
+        <div class="radio-group">
+            <label>
+                <input type="radio" name="abrechnungstyp" value="paket" checked>
+                Paket
+            </label>
+            <label>
+                <input type="radio" name="abrechnungstyp" value="stunden">
+                Stunden
+            </label>
         </div>
-        <div class="standort-item">
-          <input type="checkbox" id="standort-3" value="Skoda Autohaus Mothor Brandenburg">
-          <label for="standort-3">Skoda Autohaus Mothor Brandenburg</label>
+
+        <div class="field" id="paket-field">
+            <label for="paket">Paket auswählen</label>
+            <select id="paket">
+                <option value="">Bitte wählen...</option>
+                <option value="SocialMediaMarketing-Paket Recruiting mittel|5|425">SocialMediaMarketing-Paket Recruiting
+                    mittel (5 Std - 425€)</option>
+                <option value="SocialMediaMarketing-Paket Recruiting klein|3|255">SocialMediaMarketing-Paket Recruiting
+                    klein (3 Std - 255€)</option>
+                <option value="SocialMediaMarketing-Paket mittel|6|510">SocialMediaMarketing-Paket mittel (6 Std - 510€)
+                </option>
+                <option value="SocialMediaMarketing-Paket klein|5|425">SocialMediaMarketing-Paket klein (5 Std - 425€)
+                </option>
+                <option value="Marketing-Paket Kampagne|14|1190">Marketing-Paket Kampagne (14 Std - 1190€)</option>
+            </select>
         </div>
-        <div class="standort-item">
-          <input type="checkbox" id="standort-4" value="Volkswagen Autohaus Brandenburg">
-          <label for="standort-4">Volkswagen Autohaus Brandenburg</label>
+
+        <div class="field hidden" id="stunden-field">
+            <label for="stunden">Stunden</label>
+            <input type="number" id="stunden" min="0" step="1" value="0" placeholder="z.B. 5">
         </div>
-        <div class="standort-item">
-          <input type="checkbox" id="standort-5" value="Ford/Dehleffs Autocenter Brandenburg">
-          <label for="standort-5">Ford/Dehleffs Autocenter Brandenburg</label>
+
+        <div class="field">
+            <label for="gesamtbetrag">Gesamtbetrag (€)</label>
+            <input type="number" id="gesamtbetrag" min="0" step="0.01" value="0" placeholder="0.00">
         </div>
-        <div class="standort-item">
-          <input type="checkbox" id="standort-6" value="Ford/Mitsubishi Autocenter Stendal">
-          <label for="standort-6">Ford/Mitsubishi Autocenter Stendal</label>
+
+        <div class="badge" id="berechnung-badge">
+            💰 Betrag pro Standort: 0,00 €
         </div>
-        <div class="standort-item">
-          <input type="checkbox" id="standort-7" value="Ford/Mitsubishi Autocenter Gardelegen">
-          <label for="standort-7">Ford/Mitsubishi Autocenter Gardelegen</label>
-        </div>
-        <div class="standort-item">
-          <input type="checkbox" id="standort-8" value="Mitsubishi Brandenburg">
-          <label for="standort-8">Mitsubishi Brandenburg</label>
-        </div>
-      </div>
+
+        <button id="save-btn">Speichern</button>
+        <button id="abrechnung-btn">✓ Zur Abrechnung</button>
     </div>
 
-    <div class="radio-group">
-      <label>
-        <input type="radio" name="abrechnungstyp" value="paket" checked>
-        Paket
-      </label>
-      <label>
-        <input type="radio" name="abrechnungstyp" value="stunden">
-        Stunden
-      </label>
-    </div>
-
-    <div class="field" id="paket-field">
-      <label for="paket">Paket auswählen</label>
-      <select id="paket">
-        <option value="">Bitte wählen...</option>
-        <option value="SocialMediaMarketing-Paket Recruiting mittel|5|425">SocialMediaMarketing-Paket Recruiting mittel (5 Std - 425€)</option>
-        <option value="SocialMediaMarketing-Paket Recruiting klein|3|255">SocialMediaMarketing-Paket Recruiting klein (3 Std - 255€)</option>
-        <option value="SocialMediaMarketing-Paket mittel|6|510">SocialMediaMarketing-Paket mittel (6 Std - 510€)</option>
-        <option value="SocialMediaMarketing-Paket klein|5|425">SocialMediaMarketing-Paket klein (5 Std - 425€)</option>
-        <option value="Marketing-Paket Kampagne|14|1190">Marketing-Paket Kampagne (14 Std - 1190€)</option>
-      </select>
-    </div>
-
-    <div class="field hidden" id="stunden-field">
-      <label for="stunden">Stunden</label>
-      <input type="number" id="stunden" min="0" step="1" value="0" placeholder="z.B. 5">
-    </div>
-
-    <div class="field">
-      <label for="gesamtbetrag">Gesamtbetrag (€)</label>
-      <input type="number" id="gesamtbetrag" min="0" step="0.01" value="0" placeholder="0.00">
-    </div>
-
-    <div class="badge" id="berechnung-badge">
-      💰 Betrag pro Standort: 0,00 €
-    </div>
-
-    <button id="save-btn">Speichern</button>
-    <button id="abrechnung-btn">✓ Zur Abrechnung</button>
-  </div>
-
-  <script src="index.js"></script>
+    <script src="index.js"></script>
 </body>
+
 </html>
