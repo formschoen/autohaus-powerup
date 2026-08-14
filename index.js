@@ -50,7 +50,7 @@ t.initialize({
 
 // Formular-Logik (nur wenn direkt im iframe geladen)
 document.addEventListener('DOMContentLoaded', function () {
-  const standorteSelect = document.getElementById('standorte');
+  const standorteCheckboxes = document.querySelectorAll('input[type="checkbox"][id^="standort-"]');
   const abrechnungstypRadios = document.querySelectorAll('input[name="abrechnungstyp"]');
   const paketSelect = document.getElementById('paket');
   const stundenInput = document.getElementById('stunden');
@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const stundenField = document.getElementById('stunden-field');
 
   // Nur wenn Formular-Elemente existieren (nicht im Power-Up Kontext)
-  if (!standorteSelect) return;
+  if (!paketSelect) return;
 
   // Daten laden wenn Power-Up geöffnet wird
   loadData();
@@ -71,7 +71,9 @@ document.addEventListener('DOMContentLoaded', function () {
   paketSelect.addEventListener('change', calculateAmount);
   stundenInput.addEventListener('input', calculateAmount);
   gesamtbetragInput.addEventListener('input', calculateAmount);
-  standorteSelect.addEventListener('change', calculateAmount);
+  standorteCheckboxes.forEach(cb => {
+    cb.addEventListener('change', calculateAmount);
+  });
 
   // Abrechnungstyp wechseln (Paket/Stunden)
   abrechnungstypRadios.forEach(radio => {
@@ -103,8 +105,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
       // Standorte (Array)
       if (data.standorte && Array.isArray(data.standorte)) {
-        Array.from(standorteSelect.options).forEach(option => {
-          option.selected = data.standorte.includes(option.value);
+        standorteCheckboxes.forEach(cb => {
+          cb.checked = data.standorte.includes(cb.value);
         });
       }
 
@@ -139,7 +141,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Funktion: Betrag berechnen
   function calculateAmount() {
-    const standorte = Array.from(standorteSelect.selectedOptions).map(opt => opt.value);
+    const standorte = Array.from(standorteCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
     const anzahlStandorte = standorte.length;
     const abrechnungstyp = document.querySelector('input[name="abrechnungstyp"]:checked').value;
     let gesamtbetrag = parseFloat(gesamtbetragInput.value) || 0;
@@ -155,17 +157,21 @@ document.addEventListener('DOMContentLoaded', function () {
         // Nur aktualisieren wenn Gesamtbetrag noch 0 ist (manuelle Änderung respektieren)
         if (gesamtbetrag === 0) {
           gesamtbetrag = paketBetrag;
-          gesamtbetragInput.value = paketBetrag;
+          gesamtbetragInput.value = paketBetrag.toFixed(2);
         }
       }
     } else {
       // Stunden-Abrechnung
       const stunden = parseFloat(stundenInput.value) || 0;
       
-      // Stunden × 85€
-      if (stunden > 0 && gesamtbetrag === 0) {
-        gesamtbetrag = stunden * 85;
-        gesamtbetragInput.value = gesamtbetrag.toFixed(2);
+      // Stunden × 85€ (immer berechnen, nicht nur bei 0)
+      if (stunden > 0) {
+        const berechneterBetrag = stunden * 85;
+        // Nur aktualisieren wenn sich der Betrag geändert hat (Endlosschleife vermeiden)
+        if (Math.abs(gesamtbetrag - berechneterBetrag) > 0.01) {
+          gesamtbetrag = berechneterBetrag;
+          gesamtbetragInput.value = berechneterBetrag.toFixed(2);
+        }
       }
     }
 
@@ -182,7 +188,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // Funktion: Daten in Trello speichern
   async function saveData() {
     try {
-      const standorte = Array.from(standorteSelect.selectedOptions).map(opt => opt.value);
+      const standorte = Array.from(standorteCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
       const abrechnungstyp = document.querySelector('input[name="abrechnungstyp"]:checked').value;
 
       await t.setData('card', {

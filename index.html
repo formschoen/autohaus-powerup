@@ -91,6 +91,45 @@
     #abrechnung-btn:hover {
       background: #519839;
     }
+    /* Checkbox-Standorte statt Multi-Select */
+    .standorte-list {
+      max-height: 150px;
+      overflow-y: auto;
+      border: 2px solid #dfe1e6;
+      border-radius: 4px;
+      padding: 8px;
+      background: white;
+    }
+    .standort-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .standort-item:last-child {
+      margin-bottom: 0;
+    }
+    .standort-item input[type="checkbox"] {
+      margin: 0;
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+    .standort-item label {
+      margin: 0;
+      font-weight: 500;
+      cursor: pointer;
+      flex: 1;
+    }
+    /* Number Input ohne Spinner */
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
   </style>
 </head>
 <body>
@@ -98,17 +137,41 @@
     <h2>🚗 Autohaus Abrechnung</h2>
     
     <div class="field">
-      <label for="standorte">Standorte auswählen</label>
-      <select id="standorte" multiple>
-        <option value="Skoda Autohaus Thormann Stendal">Skoda Autohaus Thormann Stendal</option>
-        <option value="Skoda Autohaus Thormann Gardelegen">Skoda Autohaus Thormann Gardelegen</option>
-        <option value="Skoda Autohaus Mothor Brandenburg">Skoda Autohaus Mothor Brandenburg</option>
-        <option value="Volkswagen Autohaus Brandenburg">Volkswagen Autohaus Brandenburg</option>
-        <option value="Ford/Dehleffs Autocenter Brandenburg">Ford/Dehleffs Autocenter Brandenburg</option>
-        <option value="Ford/Mitsubishi Autocenter Stendal">Ford/Mitsubishi Autocenter Stendal</option>
-        <option value="Ford/Mitsubishi Autocenter Gardelegen">Ford/Mitsubishi Autocenter Gardelegen</option>
-        <option value="Mitsubishi Brandenburg">Mitsubishi Brandenburg</option>
-      </select>
+      <label>Standorte auswählen</label>
+      <div class="standorte-list">
+        <div class="standort-item">
+          <input type="checkbox" id="standort-1" value="Skoda Autohaus Thormann Stendal">
+          <label for="standort-1">Skoda Autohaus Thormann Stendal</label>
+        </div>
+        <div class="standort-item">
+          <input type="checkbox" id="standort-2" value="Skoda Autohaus Thormann Gardelegen">
+          <label for="standort-2">Skoda Autohaus Thormann Gardelegen</label>
+        </div>
+        <div class="standort-item">
+          <input type="checkbox" id="standort-3" value="Skoda Autohaus Mothor Brandenburg">
+          <label for="standort-3">Skoda Autohaus Mothor Brandenburg</label>
+        </div>
+        <div class="standort-item">
+          <input type="checkbox" id="standort-4" value="Volkswagen Autohaus Brandenburg">
+          <label for="standort-4">Volkswagen Autohaus Brandenburg</label>
+        </div>
+        <div class="standort-item">
+          <input type="checkbox" id="standort-5" value="Ford/Dehleffs Autocenter Brandenburg">
+          <label for="standort-5">Ford/Dehleffs Autocenter Brandenburg</label>
+        </div>
+        <div class="standort-item">
+          <input type="checkbox" id="standort-6" value="Ford/Mitsubishi Autocenter Stendal">
+          <label for="standort-6">Ford/Mitsubishi Autocenter Stendal</label>
+        </div>
+        <div class="standort-item">
+          <input type="checkbox" id="standort-7" value="Ford/Mitsubishi Autocenter Gardelegen">
+          <label for="standort-7">Ford/Mitsubishi Autocenter Gardelegen</label>
+        </div>
+        <div class="standort-item">
+          <input type="checkbox" id="standort-8" value="Mitsubishi Brandenburg">
+          <label for="standort-8">Mitsubishi Brandenburg</label>
+        </div>
+      </div>
     </div>
 
     <div class="radio-group">
@@ -136,7 +199,7 @@
 
     <div class="field hidden" id="stunden-field">
       <label for="stunden">Stunden</label>
-      <input type="number" id="stunden" min="0" step="0.5" value="0" placeholder="z.B. 5">
+      <input type="number" id="stunden" min="0" step="1" value="0" placeholder="z.B. 5">
     </div>
 
     <div class="field">
