@@ -55,11 +55,15 @@ if (!TrelloPowerUp) {
 
     const status = document.createElement('div');
     status.id = 'save-status';
-    status.setAttribute('role', 'status');
     status.style.marginTop = '12px';
     status.style.minHeight = '20px';
     status.style.fontWeight = '600';
     saveBtn.parentNode.parentNode.appendChild(status);
+
+    function showStatus(kind, text) {
+      status.textContent = text;
+      status.style.color = kind === 'success' ? '#7ee2b8' : kind === 'saving' ? '#9fc5ff' : '#ff9c8f';
+    }
 
     function selectedStandorte() {
       return Array.from(standorteCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
@@ -68,11 +72,6 @@ if (!TrelloPowerUp) {
     function updateBadge(value) {
       const amount = Number(value) || 0;
       badge.textContent = `💰 Betrag pro Standort: ${amount.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
-    }
-
-    function showStatus(kind, text) {
-      status.textContent = text;
-      status.style.color = kind === 'success' ? '#7ee2b8' : kind === 'saving' ? '#9fc5ff' : '#ff9c8f';
     }
 
     function calculateAmount() {
@@ -90,91 +89,85 @@ if (!TrelloPowerUp) {
       updateBadge(count ? total / count : 0);
     }
 
-    function applyData(data) {
-      const standorte = Array.isArray(data.standorte) ? data.standorte : [];
-      standorteCheckboxes.forEach(cb => cb.checked = standorte.includes(cb.value));
-      if (data.abrechnungstyp) {
-        const radio = document.querySelector(`input[name="abrechnungstyp"][value="${data.abrechnungstyp}"]`);
-        if (radio) radio.checked = true;
-      }
-      if (data.paket) paketSelect.value = data.paket;
-      if (data.stunden !== undefined && data.stunden !== null) stundenInput.value = data.stunden;
-      if (data.gesamtbetrag !== undefined && data.gesamtbetrag !== null) gesamtbetragInput.value = data.gesamtbetrag;
-      const type = document.querySelector('input[name="abrechnungstyp"]:checked')?.value;
-      paketField.classList.toggle('hidden', type === 'stunden');
-      stundenField.classList.toggle('hidden', type !== 'stunden');
-      calculateAmount();
-    }
-
     async function loadData() {
       try {
-        showStatus('saving', 'Lade gespeicherte Daten …');
         const data = await iframeT.get('card', 'shared');
         console.log('Von Trello geladene Card-Daten:', data);
-        applyData(data || {});
-        showStatus('success', data && Object.keys(data).length ? '✓ Gespeicherte Daten geladen.' : 'Noch keine Daten gespeichert.');
+        const values = data || {};
+        if (Array.isArray(values.standorte)) standorteCheckboxes.forEach(cb => cb.checked = values.standorte.includes(cb.value));
+        if (values.abrechnungstyp) {
+          const radio = document.querySelector(`input[name="abrechnungstyp"][value="${values.abrechnungstyp}"]`);
+          if (radio) radio.checked = true;
+        }
+        if (values.paket) paketSelect.value = values.paket;
+        if (values.stunden !== undefined) stundenInput.value = values.stunden;
+        if (values.gesamtbetrag !== undefined) gesamtbetragInput.value = values.gesamtbetrag;
+        const type = document.querySelector('input[name="abrechnungstyp"]:checked')?.value;
+        paketField.classList.toggle('hidden', type === 'stunden');
+        stundenField.classList.toggle('hidden', type !== 'stunden');
+        calculateAmount();
       } catch (error) {
         console.error('Fehler beim Laden:', error);
-        showStatus('error', '✕ Gespeicherte Daten konnten nicht geladen werden: ' + error.message);
+        showStatus('error', '✕ Laden fehlgeschlagen: ' + error.message);
       }
     }
 
     async function saveData() {
-      const originalText = saveBtn.textContent;
-      try {
-        saveBtn.disabled = true;
-        saveBtn.textContent = '⏳ Speichert …';
-        showStatus('saving', 'Speichere Daten auf dieser Trello-Karte …');
+      saveBtn.disabled = true;
+      saveBtn.textContent = '⏳ Speichert …';
+      showStatus('saving', 'Speichere Daten auf dieser Trello-Karte …');
 
-        const amountText = badge.textContent.replace('💰 Betrag pro Standort: ', '').replace(' €', '').replace('.', '').replace(',', '.');
-        const values = {
-          standorte: selectedStandorte(),
-          paket: paketSelect.value,
-          stunden: stundenInput.value,
-          gesamtbetrag: gesamtbetragInput.value,
-          betrag_pro_standort: (Number(amountText) || 0).toFixed(2),
-          abrechnungstyp: document.querySelector('input[name="abrechnungstyp"]:checked')?.value || 'paket',
-          gespeichert_am: new Date().toISOString()
-        };
+      const amountText = badge.textContent.replace('💰 Betrag pro Standort: ', '').replace(' €', '').replace('.', '').replace(',', '.');
+      const values = {
+        standorte: selectedStandorte(),
+        paket: paketSelect.value,
+        stunden: stundenInput.value,
+        gesamtbetrag: gesamtbetragInput.value,
+        betrag_pro_standort: (Number(amountText) || 0).toFixed(2),
+        abrechnungstyp: document.querySelector('input[name="abrechnungstyp"]:checked')?.value || 'paket',
+        gespeichert_am: new Date().toISOString()
+      };
 
-        console.log('Zu Trello gesendete Card-Daten:', values);
-        await iframeT.set('card', 'shared', values);
-        console.log('Trello set() abgeschlossen.');
+      console.log('Zu Trello gesendete Card-Daten:', values);
 
-        saveBtn.textContent = '✓ Gespeichert';
-        showStatus('success', '✓ Erfolgreich gespeichert.');
-        window.setTimeout(function () {
-          saveBtn.textContent = originalText;
-          saveBtn.disabled = false;
-        }, 3000);
-      } catch (error) {
-        console.error('Fehler beim Speichern:', error);
-        saveBtn.textContent = '✕ Nicht gespeichert';
-        showStatus('error', '✕ Nicht gespeichert: ' + error.message);
-        window.setTimeout(function () {
-          saveBtn.textContent = originalText;
-          saveBtn.disabled = false;
-        }, 4000);
-      }
+      // Kein await: In dieser Card-Back-Implementierung beendet Trello den RPC-Aufruf nicht zuverlässig.
+      iframeT.set('card', 'shared', values)
+        .then(function () {
+          console.log('Trello set() erfolgreich abgeschlossen.');
+          saveBtn.textContent = '✓ Gespeichert';
+          showStatus('success', '✓ Erfolgreich auf der Karte gespeichert.');
+        })
+        .catch(function (error) {
+          console.error('Fehler beim Speichern:', error);
+          saveBtn.textContent = '✕ Nicht gespeichert';
+          showStatus('error', '✕ Speichern fehlgeschlagen: ' + error.message);
+        })
+        .finally(function () {
+          window.setTimeout(function () {
+            saveBtn.disabled = false;
+            saveBtn.textContent = '💾 Speichern';
+          }, 3000);
+        });
     }
 
-    async function moveToAbrechnung() {
-      await saveData();
-      alert('ℹ️ Die Board-ID für den Wechsel zur Abrechnung muss noch eingetragen werden.');
-    }
-
-    radios.forEach(radio => radio.addEventListener('change', function () {
-      const hours = this.value === 'stunden';
+    function switchType() {
+      const hours = document.querySelector('input[name="abrechnungstyp"]:checked')?.value === 'stunden';
       paketField.classList.toggle('hidden', hours);
       stundenField.classList.toggle('hidden', !hours);
       calculateAmount();
-    }));
+    }
+
+    radios.forEach(radio => radio.addEventListener('change', switchType));
     paketSelect.addEventListener('change', calculateAmount);
     stundenInput.addEventListener('input', calculateAmount);
     gesamtbetragInput.addEventListener('input', calculateAmount);
     standorteCheckboxes.forEach(cb => cb.addEventListener('change', calculateAmount));
-    saveBtn.addEventListener('click', function () { void saveData(); });
-    moveBtn.addEventListener('click', function () { void moveToAbrechnung(); });
-    void loadData();
+    saveBtn.addEventListener('click', saveData);
+    moveBtn.addEventListener('click', function () {
+      saveData();
+      alert('ℹ️ Die Board-ID für den Wechsel zur Abrechnung muss noch eingetragen werden.');
+    });
+
+    loadData();
   });
 }
