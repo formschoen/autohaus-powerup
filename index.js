@@ -53,6 +53,14 @@ if (!TrelloPowerUp) {
 
     if (!paketSelect) return;
 
+    const status = document.createElement('div');
+    status.id = 'save-status';
+    status.setAttribute('role', 'status');
+    status.style.marginTop = '12px';
+    status.style.minHeight = '20px';
+    status.style.fontWeight = '600';
+    saveBtn.parentNode.parentNode.appendChild(status);
+
     function selectedStandorte() {
       return Array.from(standorteCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
     }
@@ -62,57 +70,49 @@ if (!TrelloPowerUp) {
       badge.textContent = `💰 Betrag pro Standort: ${amount.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
     }
 
-    function showSaveStatus(status, message) {
-      let notice = document.getElementById('save-status');
-      if (!notice) {
-        notice = document.createElement('div');
-        notice.id = 'save-status';
-        notice.setAttribute('role', 'status');
-        notice.style.marginTop = '12px';
-        notice.style.fontWeight = '600';
-        notice.style.minHeight = '20px';
-        saveBtn.parentNode.appendChild(notice);
-      }
-      notice.textContent = message;
-      notice.style.color = status === 'success' ? '#7ee2b8' : status === 'saving' ? '#9fc5ff' : '#ff9c8f';
+    function showStatus(kind, text) {
+      status.textContent = text;
+      status.style.color = kind === 'success' ? '#7ee2b8' : kind === 'saving' ? '#9fc5ff' : '#ff9c8f';
     }
 
     function calculateAmount() {
       const type = document.querySelector('input[name="abrechnungstyp"]:checked')?.value;
       let total = Number(gesamtbetragInput.value) || 0;
       if (type === 'paket' && paketSelect.value) {
-        const parts = paketSelect.value.split('|');
-        total = Number(parts[2]) || 0;
+        total = Number(paketSelect.value.split('|')[2]) || 0;
         gesamtbetragInput.value = total.toFixed(2);
       }
       if (type === 'stunden') {
-        const hours = Number(stundenInput.value) || 0;
-        total = hours * 85;
+        total = (Number(stundenInput.value) || 0) * 85;
         gesamtbetragInput.value = total ? total.toFixed(2) : '';
       }
       const count = selectedStandorte().length;
       updateBadge(count ? total / count : 0);
     }
 
+    function applyData(data) {
+      const standorte = Array.isArray(data.standorte) ? data.standorte : [];
+      standorteCheckboxes.forEach(cb => cb.checked = standorte.includes(cb.value));
+      if (data.abrechnungstyp) {
+        const radio = document.querySelector(`input[name="abrechnungstyp"][value="${data.abrechnungstyp}"]`);
+        if (radio) radio.checked = true;
+      }
+      if (data.paket) paketSelect.value = data.paket;
+      if (data.stunden) stundenInput.value = data.stunden;
+      if (data.gesamtbetrag !== undefined && data.gesamtbetrag !== null) gesamtbetragInput.value = data.gesamtbetrag;
+      const type = document.querySelector('input[name="abrechnungstyp"]:checked')?.value;
+      paketField.classList.toggle('hidden', type === 'stunden');
+      stundenField.classList.toggle('hidden', type !== 'stunden');
+      calculateAmount();
+    }
+
     async function loadData() {
       try {
         const data = await iframeT.get('card', 'shared');
-        const standorte = data.standorte || [];
-        if (Array.isArray(standorte)) standorteCheckboxes.forEach(cb => cb.checked = standorte.includes(cb.value));
-        if (data.abrechnungstyp) {
-          const radio = document.querySelector(`input[name="abrechnungstyp"][value="${data.abrechnungstyp}"]`);
-          if (radio) radio.checked = true;
-        }
-        if (data.paket) paketSelect.value = data.paket;
-        if (data.stunden) stundenInput.value = data.stunden;
-        if (data.gesamtbetrag) gesamtbetragInput.value = data.gesamtbetrag;
-        const type = document.querySelector('input[name="abrechnungstyp"]:checked')?.value;
-        paketField.classList.toggle('hidden', type === 'stunden');
-        stundenField.classList.toggle('hidden', type !== 'stunden');
-        calculateAmount();
+        applyData(data || {});
       } catch (error) {
         console.error('Fehler beim Laden:', error);
-        showSaveStatus('error', '✕ Gespeicherte Daten konnten nicht geladen werden.');
+        showStatus('error', '✕ Gespeicherte Daten konnten nicht geladen werden: ' + error.message);
       }
     }
 
@@ -132,7 +132,7 @@ if (!TrelloPowerUp) {
       try {
         saveBtn.disabled = true;
         saveBtn.textContent = '⏳ Speichert …';
-        showSaveStatus('saving', 'Speichere Daten auf dieser Trello-Karte …');
+        showStatus('saving', 'Speichere Daten auf dieser Trello-Karte …');
 
         const amountText = badge.textContent.replace('💰 Betrag pro Standort: ', '').replace(' €', '').replace('.', '').replace(',', '.');
         const values = {
@@ -146,13 +146,20 @@ if (!TrelloPowerUp) {
         };
 
         await iframeT.set('card', 'shared', values);
-        const savedAmount = await iframeT.get('card', 'shared', 'gesamtbetrag', null);
-        if (String(savedAmount) !== String(values.gesamtbetrag)) {
-          throw new Error('Trello hat den gespeicherten Gesamtbetrag nicht zurückgegeben.');
+        const saved = await iframeT.get('card', 'shared');
+
+        const matches = saved &&
+          String(saved.gesamtbetrag) === String(values.gesamtbetrag) &&
+          String(saved.paket) === String(values.paket) &&
+          JSON.stringify(saved.standorte || []) === JSON.stringify(values.standorte);
+
+        if (!matches) {
+          console.error('Trello Speicherprüfung fehlgeschlagen.', { sent: values, received: saved });
+          throw new Error('Trello hat die Daten nicht bestätigt. Details stehen in der Browser-Konsole.');
         }
 
         saveBtn.textContent = '✓ Gespeichert';
-        showSaveStatus('success', '✓ Erfolgreich auf der Karte gespeichert.');
+        showStatus('success', `✓ Erfolgreich gespeichert um ${new Date().toLocaleTimeString('de-DE')}.`);
         setTimeout(function () {
           saveBtn.textContent = originalText;
           saveBtn.disabled = false;
@@ -160,7 +167,7 @@ if (!TrelloPowerUp) {
       } catch (error) {
         console.error('Fehler beim Speichern:', error);
         saveBtn.textContent = '✕ Nicht gespeichert';
-        showSaveStatus('error', '✕ Nicht gespeichert: ' + error.message);
+        showStatus('error', '✕ Nicht gespeichert: ' + error.message);
         setTimeout(function () {
           saveBtn.textContent = originalText;
           saveBtn.disabled = false;
