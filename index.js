@@ -98,7 +98,7 @@ if (!TrelloPowerUp) {
         if (radio) radio.checked = true;
       }
       if (data.paket) paketSelect.value = data.paket;
-      if (data.stunden) stundenInput.value = data.stunden;
+      if (data.stunden !== undefined && data.stunden !== null) stundenInput.value = data.stunden;
       if (data.gesamtbetrag !== undefined && data.gesamtbetrag !== null) gesamtbetragInput.value = data.gesamtbetrag;
       const type = document.querySelector('input[name="abrechnungstyp"]:checked')?.value;
       paketField.classList.toggle('hidden', type === 'stunden');
@@ -108,8 +108,11 @@ if (!TrelloPowerUp) {
 
     async function loadData() {
       try {
+        showStatus('saving', 'Lade gespeicherte Daten …');
         const data = await iframeT.get('card', 'shared');
+        console.log('Von Trello geladene Card-Daten:', data);
         applyData(data || {});
+        showStatus('success', data && Object.keys(data).length ? '✓ Gespeicherte Daten geladen.' : 'Noch keine Daten gespeichert.');
       } catch (error) {
         console.error('Fehler beim Laden:', error);
         showStatus('error', '✕ Gespeicherte Daten konnten nicht geladen werden: ' + error.message);
@@ -134,18 +137,12 @@ if (!TrelloPowerUp) {
           gespeichert_am: new Date().toISOString()
         };
 
-        const savePromise = iframeT.set('card', 'shared', values);
-        const timeoutPromise = new Promise((resolve) => {
-          window.setTimeout(resolve, 5000);
-        });
-
-        // Trello beantwortet set() in manchen Card-Back-Versionen nicht zuverlässig.
-        // Der Speichervorgang wird deshalb nicht von einer nie endenden Antwort abhängig gemacht.
-        await Promise.race([savePromise, timeoutPromise]);
+        console.log('Zu Trello gesendete Card-Daten:', values);
+        await iframeT.set('card', 'shared', values);
+        console.log('Trello set() abgeschlossen.');
 
         saveBtn.textContent = '✓ Gespeichert';
-        showStatus('success', '✓ Speichervorgang an Trello übergeben. Bitte Karte kurz schließen und erneut öffnen.');
-
+        showStatus('success', '✓ Erfolgreich gespeichert.');
         window.setTimeout(function () {
           saveBtn.textContent = originalText;
           saveBtn.disabled = false;
