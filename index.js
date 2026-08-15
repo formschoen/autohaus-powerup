@@ -75,6 +75,14 @@ if (!TrelloPowerUp) {
       status.style.color = kind === 'success' ? '#7ee2b8' : kind === 'saving' ? '#9fc5ff' : '#ff9c8f';
     }
 
+    function withTimeout(promise, milliseconds, label) {
+      let timeoutId;
+      const timeout = new Promise((_, reject) => {
+        timeoutId = window.setTimeout(() => reject(new Error(`${label} – keine Antwort von Trello nach ${milliseconds / 1000} Sekunden.`)), milliseconds);
+      });
+      return Promise.race([promise, timeout]).finally(() => window.clearTimeout(timeoutId));
+    }
+
     function calculateAmount() {
       const type = document.querySelector('input[name="abrechnungstyp"]:checked')?.value;
       let total = Number(gesamtbetragInput.value) || 0;
@@ -108,7 +116,7 @@ if (!TrelloPowerUp) {
 
     async function loadData() {
       try {
-        const data = await iframeT.get('card', 'shared');
+        const data = await withTimeout(iframeT.get('card', 'shared'), 5000, 'Laden');
         applyData(data || {});
       } catch (error) {
         console.error('Fehler beim Laden:', error);
@@ -145,9 +153,11 @@ if (!TrelloPowerUp) {
           gespeichert_am: new Date().toISOString()
         };
 
-        await iframeT.set('card', 'shared', values);
-        const saved = await iframeT.get('card', 'shared');
+        console.log('Sende Daten an Trello:', values);
+        await withTimeout(iframeT.set('card', 'shared', values), 5000, 'Speichern');
+        console.log('Trello hat Speichern beantwortet.');
 
+        const saved = await withTimeout(iframeT.get('card', 'shared'), 5000, 'Speicherprüfung');
         const matches = saved &&
           String(saved.gesamtbetrag) === String(values.gesamtbetrag) &&
           String(saved.paket) === String(values.paket) &&
@@ -155,23 +165,20 @@ if (!TrelloPowerUp) {
 
         if (!matches) {
           console.error('Trello Speicherprüfung fehlgeschlagen.', { sent: values, received: saved });
-          throw new Error('Trello hat die Daten nicht bestätigt. Details stehen in der Browser-Konsole.');
+          throw new Error('Trello hat andere oder keine Daten zurückgegeben. Details stehen in der Browser-Konsole.');
         }
 
         saveBtn.textContent = '✓ Gespeichert';
         showStatus('success', `✓ Erfolgreich gespeichert um ${new Date().toLocaleTimeString('de-DE')}.`);
-        setTimeout(function () {
-          saveBtn.textContent = originalText;
-          saveBtn.disabled = false;
-        }, 2500);
       } catch (error) {
         console.error('Fehler beim Speichern:', error);
         saveBtn.textContent = '✕ Nicht gespeichert';
         showStatus('error', '✕ Nicht gespeichert: ' + error.message);
-        setTimeout(function () {
+      } finally {
+        window.setTimeout(function () {
           saveBtn.textContent = originalText;
           saveBtn.disabled = false;
-        }, 4000);
+        }, 2500);
       }
     }
 
