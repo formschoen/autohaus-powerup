@@ -112,22 +112,74 @@ if (!TrelloPowerUp) {
     standorteCheckboxes.forEach(cb => cb.addEventListener('change', calculateAmount));
 
     async function saveData() {
+      const originalText = saveBtn.textContent;
+
       try {
-        const amountText = badge.textContent.replace('💰 Betrag pro Standort: ', '').replace(' €', '').replace('.', '').replace(',', '.');
+        // Sichtbares Feedback sofort beim Klick
+        saveBtn.disabled = true;
+        saveBtn.textContent = '⏳ Speichert …';
+
+        const context = iframeT.getContext();
+
+        // Prüfen, ob die Card im iframe-Kontext vorhanden ist
+        if (!context.card || !context.card.id) {
+          throw new Error('Keine Trello-Karte im Power-Up-Kontext gefunden.');
+        }
+
+        // Prüfen, ob Schreibzugriff besteht
+        if (context.permissions && context.permissions.board !== 'write') {
+          throw new Error('Du hast keine Schreibberechtigung für dieses Board.');
+        }
+
+        const amountText = badge.textContent
+          .replace('💰 Betrag pro Standort: ', '')
+          .replace(' €', '')
+          .replace('.', '')
+          .replace(',', '.');
+
         const values = {
           standorte: selectedStandorte(),
           paket: paketSelect.value,
           stunden: stundenInput.value,
           gesamtbetrag: gesamtbetragInput.value,
           betrag_pro_standort: (Number(amountText) || 0).toFixed(2),
-          abrechnungstyp: document.querySelector('input[name="abrechnungstyp"]:checked')?.value || 'paket'
+          abrechnungstyp: document.querySelector(
+            'input[name="abrechnungstyp"]:checked'
+          )?.value || 'paket',
+          gespeichert_am: new Date().toISOString()
         };
 
+        // Korrekt: Alle Werte in EINEM Vorgang speichern
         await iframeT.set('card', 'shared', values);
-        alert('✅ Daten gespeichert!');
+
+        // Danach exakt den eben gespeicherten Wert aus Trello lesen
+        const saved = await iframeT.get('card', 'shared', 'gesamtbetrag', null);
+
+        if (saved !== values.gesamtbetrag) {
+          throw new Error('Trello hat den Wert nicht bestätigt.');
+        }
+
+        // Dauerhaft sichtbare Bestätigung
+        saveBtn.textContent = '✓ Gespeichert';
+        saveBtn.style.background = '#22a06b';
+
+        setTimeout(() => {
+          saveBtn.textContent = originalText;
+          saveBtn.style.background = '';
+          saveBtn.disabled = false;
+        }, 2500);
+
       } catch (error) {
         console.error('Fehler beim Speichern:', error);
-        alert('❌ Fehler beim Speichern: ' + error.message);
+
+        saveBtn.textContent = '✕ Nicht gespeichert';
+        saveBtn.style.background = '#c9372c';
+
+        setTimeout(() => {
+          saveBtn.textContent = originalText;
+          saveBtn.style.background = '';
+          saveBtn.disabled = false;
+        }, 3500);
       }
     }
 
