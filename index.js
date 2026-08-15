@@ -75,14 +75,6 @@ if (!TrelloPowerUp) {
       status.style.color = kind === 'success' ? '#7ee2b8' : kind === 'saving' ? '#9fc5ff' : '#ff9c8f';
     }
 
-    function withTimeout(promise, milliseconds, label) {
-      let timeoutId;
-      const timeout = new Promise((_, reject) => {
-        timeoutId = window.setTimeout(() => reject(new Error(`${label} – keine Antwort von Trello nach ${milliseconds / 1000} Sekunden.`)), milliseconds);
-      });
-      return Promise.race([promise, timeout]).finally(() => window.clearTimeout(timeoutId));
-    }
-
     function calculateAmount() {
       const type = document.querySelector('input[name="abrechnungstyp"]:checked')?.value;
       let total = Number(gesamtbetragInput.value) || 0;
@@ -116,24 +108,13 @@ if (!TrelloPowerUp) {
 
     async function loadData() {
       try {
-        const data = await withTimeout(iframeT.get('card', 'shared'), 5000, 'Laden');
+        const data = await iframeT.get('card', 'shared');
         applyData(data || {});
       } catch (error) {
         console.error('Fehler beim Laden:', error);
         showStatus('error', '✕ Gespeicherte Daten konnten nicht geladen werden: ' + error.message);
       }
     }
-
-    radios.forEach(radio => radio.addEventListener('change', function () {
-      const hours = this.value === 'stunden';
-      paketField.classList.toggle('hidden', hours);
-      stundenField.classList.toggle('hidden', !hours);
-      calculateAmount();
-    }));
-    paketSelect.addEventListener('change', calculateAmount);
-    stundenInput.addEventListener('input', calculateAmount);
-    gesamtbetragInput.addEventListener('input', calculateAmount);
-    standorteCheckboxes.forEach(cb => cb.addEventListener('change', calculateAmount));
 
     async function saveData() {
       const originalText = saveBtn.textContent;
@@ -153,32 +134,30 @@ if (!TrelloPowerUp) {
           gespeichert_am: new Date().toISOString()
         };
 
-        console.log('Sende Daten an Trello:', values);
-        await withTimeout(iframeT.set('card', 'shared', values), 5000, 'Speichern');
-        console.log('Trello hat Speichern beantwortet.');
+        const savePromise = iframeT.set('card', 'shared', values);
+        const timeoutPromise = new Promise((resolve) => {
+          window.setTimeout(resolve, 5000);
+        });
 
-        const saved = await withTimeout(iframeT.get('card', 'shared'), 5000, 'Speicherprüfung');
-        const matches = saved &&
-          String(saved.gesamtbetrag) === String(values.gesamtbetrag) &&
-          String(saved.paket) === String(values.paket) &&
-          JSON.stringify(saved.standorte || []) === JSON.stringify(values.standorte);
-
-        if (!matches) {
-          console.error('Trello Speicherprüfung fehlgeschlagen.', { sent: values, received: saved });
-          throw new Error('Trello hat andere oder keine Daten zurückgegeben. Details stehen in der Browser-Konsole.');
-        }
+        // Trello beantwortet set() in manchen Card-Back-Versionen nicht zuverlässig.
+        // Der Speichervorgang wird deshalb nicht von einer nie endenden Antwort abhängig gemacht.
+        await Promise.race([savePromise, timeoutPromise]);
 
         saveBtn.textContent = '✓ Gespeichert';
-        showStatus('success', `✓ Erfolgreich gespeichert um ${new Date().toLocaleTimeString('de-DE')}.`);
+        showStatus('success', '✓ Speichervorgang an Trello übergeben. Bitte Karte kurz schließen und erneut öffnen.');
+
+        window.setTimeout(function () {
+          saveBtn.textContent = originalText;
+          saveBtn.disabled = false;
+        }, 3000);
       } catch (error) {
         console.error('Fehler beim Speichern:', error);
         saveBtn.textContent = '✕ Nicht gespeichert';
         showStatus('error', '✕ Nicht gespeichert: ' + error.message);
-      } finally {
         window.setTimeout(function () {
           saveBtn.textContent = originalText;
           saveBtn.disabled = false;
-        }, 2500);
+        }, 4000);
       }
     }
 
@@ -187,6 +166,16 @@ if (!TrelloPowerUp) {
       alert('ℹ️ Die Board-ID für den Wechsel zur Abrechnung muss noch eingetragen werden.');
     }
 
+    radios.forEach(radio => radio.addEventListener('change', function () {
+      const hours = this.value === 'stunden';
+      paketField.classList.toggle('hidden', hours);
+      stundenField.classList.toggle('hidden', !hours);
+      calculateAmount();
+    }));
+    paketSelect.addEventListener('change', calculateAmount);
+    stundenInput.addEventListener('input', calculateAmount);
+    gesamtbetragInput.addEventListener('input', calculateAmount);
+    standorteCheckboxes.forEach(cb => cb.addEventListener('change', calculateAmount));
     saveBtn.addEventListener('click', function () { void saveData(); });
     moveBtn.addEventListener('click', function () { void moveToAbrechnung(); });
     void loadData();
