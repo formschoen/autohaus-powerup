@@ -68,11 +68,12 @@ if (!TrelloPowerUp) {
         notice = document.createElement('div');
         notice.id = 'save-status';
         notice.setAttribute('role', 'status');
-        saveBtn.parentNode.insertBefore(notice, saveBtn.parentNode.nextSibling);
+        notice.style.marginTop = '12px';
+        notice.style.fontWeight = '600';
+        notice.style.minHeight = '20px';
+        saveBtn.parentNode.appendChild(notice);
       }
       notice.textContent = message;
-      notice.style.marginTop = '12px';
-      notice.style.fontWeight = '600';
       notice.style.color = status === 'success' ? '#7ee2b8' : status === 'saving' ? '#9fc5ff' : '#ff9c8f';
     }
 
@@ -172,8 +173,8 @@ if (!TrelloPowerUp) {
       alert('ℹ️ Die Board-ID für den Wechsel zur Abrechnung muss noch eingetragen werden.');
     }
 
-    saveBtn.addEventListener('click', saveData);
-    moveBtn.addEventListener('click', moveToAbrechnung);
-    loadData();
+    saveBtn.addEventListener('click', function () { void saveData(); });
+    moveBtn.addEventListener('click', function () { void moveToAbrechnung(); });
+    void loadData();
   });
 }
