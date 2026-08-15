@@ -81,7 +81,7 @@ if (!TrelloPowerUp) {
 
     async function loadData() {
       try {
-        const data = await iframeT.getAll();
+        const data = await iframeT.get('card', 'shared');
         const standorte = data.standorte || [];
         if (Array.isArray(standorte)) standorteCheckboxes.forEach(cb => cb.checked = standorte.includes(cb.value));
         if (data.abrechnungstyp) {
@@ -122,7 +122,8 @@ if (!TrelloPowerUp) {
           betrag_pro_standort: (Number(amountText) || 0).toFixed(2),
           abrechnungstyp: document.querySelector('input[name="abrechnungstyp"]:checked')?.value || 'paket'
         };
-        await Promise.all(Object.entries(values).map(([key, value]) => iframeT.set('card', 'shared', key, value)));
+
+        await iframeT.set('card', 'shared', values);
         alert('✅ Daten gespeichert!');
       } catch (error) {
         console.error('Fehler beim Speichern:', error);
