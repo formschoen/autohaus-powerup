@@ -62,6 +62,20 @@ if (!TrelloPowerUp) {
       badge.textContent = `💰 Betrag pro Standort: ${amount.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
     }
 
+    function showSaveStatus(status, message) {
+      let notice = document.getElementById('save-status');
+      if (!notice) {
+        notice = document.createElement('div');
+        notice.id = 'save-status';
+        notice.setAttribute('role', 'status');
+        saveBtn.parentNode.insertBefore(notice, saveBtn.parentNode.nextSibling);
+      }
+      notice.textContent = message;
+      notice.style.marginTop = '12px';
+      notice.style.fontWeight = '600';
+      notice.style.color = status === 'success' ? '#7ee2b8' : status === 'saving' ? '#9fc5ff' : '#ff9c8f';
+    }
+
     function calculateAmount() {
       const type = document.querySelector('input[name="abrechnungstyp"]:checked')?.value;
       let total = Number(gesamtbetragInput.value) || 0;
@@ -97,6 +111,7 @@ if (!TrelloPowerUp) {
         calculateAmount();
       } catch (error) {
         console.error('Fehler beim Laden:', error);
+        showSaveStatus('error', '✕ Gespeicherte Daten konnten nicht geladen werden.');
       }
     }
 
@@ -113,73 +128,42 @@ if (!TrelloPowerUp) {
 
     async function saveData() {
       const originalText = saveBtn.textContent;
-
       try {
-        // Sichtbares Feedback sofort beim Klick
         saveBtn.disabled = true;
         saveBtn.textContent = '⏳ Speichert …';
+        showSaveStatus('saving', 'Speichere Daten auf dieser Trello-Karte …');
 
-        const context = iframeT.getContext();
-
-        // Prüfen, ob die Card im iframe-Kontext vorhanden ist
-        if (!context.card || !context.card.id) {
-          throw new Error('Keine Trello-Karte im Power-Up-Kontext gefunden.');
-        }
-
-        // Prüfen, ob Schreibzugriff besteht
-        if (context.permissions && context.permissions.board !== 'write') {
-          throw new Error('Du hast keine Schreibberechtigung für dieses Board.');
-        }
-
-        const amountText = badge.textContent
-          .replace('💰 Betrag pro Standort: ', '')
-          .replace(' €', '')
-          .replace('.', '')
-          .replace(',', '.');
-
+        const amountText = badge.textContent.replace('💰 Betrag pro Standort: ', '').replace(' €', '').replace('.', '').replace(',', '.');
         const values = {
           standorte: selectedStandorte(),
           paket: paketSelect.value,
           stunden: stundenInput.value,
           gesamtbetrag: gesamtbetragInput.value,
           betrag_pro_standort: (Number(amountText) || 0).toFixed(2),
-          abrechnungstyp: document.querySelector(
-            'input[name="abrechnungstyp"]:checked'
-          )?.value || 'paket',
+          abrechnungstyp: document.querySelector('input[name="abrechnungstyp"]:checked')?.value || 'paket',
           gespeichert_am: new Date().toISOString()
         };
 
-        // Korrekt: Alle Werte in EINEM Vorgang speichern
         await iframeT.set('card', 'shared', values);
-
-        // Danach exakt den eben gespeicherten Wert aus Trello lesen
-        const saved = await iframeT.get('card', 'shared', 'gesamtbetrag', null);
-
-        if (saved !== values.gesamtbetrag) {
-          throw new Error('Trello hat den Wert nicht bestätigt.');
+        const savedAmount = await iframeT.get('card', 'shared', 'gesamtbetrag', null);
+        if (String(savedAmount) !== String(values.gesamtbetrag)) {
+          throw new Error('Trello hat den gespeicherten Gesamtbetrag nicht zurückgegeben.');
         }
 
-        // Dauerhaft sichtbare Bestätigung
         saveBtn.textContent = '✓ Gespeichert';
-        saveBtn.style.background = '#22a06b';
-
-        setTimeout(() => {
+        showSaveStatus('success', '✓ Erfolgreich auf der Karte gespeichert.');
+        setTimeout(function () {
           saveBtn.textContent = originalText;
-          saveBtn.style.background = '';
           saveBtn.disabled = false;
         }, 2500);
-
       } catch (error) {
         console.error('Fehler beim Speichern:', error);
-
         saveBtn.textContent = '✕ Nicht gespeichert';
-        saveBtn.style.background = '#c9372c';
-
-        setTimeout(() => {
+        showSaveStatus('error', '✕ Nicht gespeichert: ' + error.message);
+        setTimeout(function () {
           saveBtn.textContent = originalText;
-          saveBtn.style.background = '';
           saveBtn.disabled = false;
-        }, 3500);
+        }, 4000);
       }
     }
 
