@@ -1,10 +1,10 @@
-const t = window.TrelloPowerUp;
+const TrelloPowerUp = window.TrelloPowerUp;
 
-if (!t) {
+if (!TrelloPowerUp) {
   console.error('Trello Power-Up SDK wurde nicht geladen.');
 } else {
-  t.initialize({
-    'card-back-section': function (t) {
+  TrelloPowerUp.initialize({
+    'card-back-section': function () {
       return {
         title: '🚗 Autohaus Abrechnung',
         icon: 'https://cdn-icons-png.flaticon.com/512/2693/2693507.png',
@@ -15,7 +15,7 @@ if (!t) {
         }
       };
     },
-    'card-buttons': function (t) {
+    'card-buttons': function () {
       return [{
         icon: 'https://cdn-icons-png.flaticon.com/512/2693/2693507.png',
         text: 'Abrechnung öffnen',
@@ -39,6 +39,7 @@ if (!t) {
   });
 
   document.addEventListener('DOMContentLoaded', function () {
+    const iframeT = TrelloPowerUp.iframe();
     const standorteCheckboxes = document.querySelectorAll('input[type="checkbox"][id^="standort-"]');
     const radios = document.querySelectorAll('input[name="abrechnungstyp"]');
     const paketSelect = document.getElementById('paket');
@@ -64,31 +65,25 @@ if (!t) {
     function calculateAmount() {
       const type = document.querySelector('input[name="abrechnungstyp"]:checked')?.value;
       let total = Number(gesamtbetragInput.value) || 0;
-
       if (type === 'paket' && paketSelect.value) {
         const parts = paketSelect.value.split('|');
         total = Number(parts[2]) || 0;
         gesamtbetragInput.value = total.toFixed(2);
       }
-
       if (type === 'stunden') {
         const hours = Number(stundenInput.value) || 0;
         total = hours * 85;
         gesamtbetragInput.value = total ? total.toFixed(2) : '';
       }
-
       const count = selectedStandorte().length;
       updateBadge(count ? total / count : 0);
     }
 
     async function loadData() {
       try {
-        const data = await t.getAll();
+        const data = await iframeT.getAll();
         const standorte = data.standorte || [];
-
-        if (Array.isArray(standorte)) {
-          standorteCheckboxes.forEach(cb => cb.checked = standorte.includes(cb.value));
-        }
+        if (Array.isArray(standorte)) standorteCheckboxes.forEach(cb => cb.checked = standorte.includes(cb.value));
         if (data.abrechnungstyp) {
           const radio = document.querySelector(`input[name="abrechnungstyp"][value="${data.abrechnungstyp}"]`);
           if (radio) radio.checked = true;
@@ -96,7 +91,6 @@ if (!t) {
         if (data.paket) paketSelect.value = data.paket;
         if (data.stunden) stundenInput.value = data.stunden;
         if (data.gesamtbetrag) gesamtbetragInput.value = data.gesamtbetrag;
-
         const type = document.querySelector('input[name="abrechnungstyp"]:checked')?.value;
         paketField.classList.toggle('hidden', type === 'stunden');
         stundenField.classList.toggle('hidden', type !== 'stunden');
@@ -112,7 +106,6 @@ if (!t) {
       stundenField.classList.toggle('hidden', !hours);
       calculateAmount();
     }));
-
     paketSelect.addEventListener('change', calculateAmount);
     stundenInput.addEventListener('input', calculateAmount);
     gesamtbetragInput.addEventListener('input', calculateAmount);
@@ -120,12 +113,7 @@ if (!t) {
 
     async function saveData() {
       try {
-        const amountText = badge.textContent
-          .replace('💰 Betrag pro Standort: ', '')
-          .replace(' €', '')
-          .replace('.', '')
-          .replace(',', '.');
-
+        const amountText = badge.textContent.replace('💰 Betrag pro Standort: ', '').replace(' €', '').replace('.', '').replace(',', '.');
         const values = {
           standorte: selectedStandorte(),
           paket: paketSelect.value,
@@ -134,11 +122,7 @@ if (!t) {
           betrag_pro_standort: (Number(amountText) || 0).toFixed(2),
           abrechnungstyp: document.querySelector('input[name="abrechnungstyp"]:checked')?.value || 'paket'
         };
-
-        await Promise.all(Object.entries(values).map(([key, value]) =>
-          t.set('card', 'shared', key, value)
-        ));
-
+        await Promise.all(Object.entries(values).map(([key, value]) => iframeT.set('card', 'shared', key, value)));
         alert('✅ Daten gespeichert!');
       } catch (error) {
         console.error('Fehler beim Speichern:', error);
